@@ -1,0 +1,11 @@
+mutation createObject($object: ObjectCreateInput!) {
+  objectCreate(objectInput: $object)
+}
+
+mutation createCommit($commit: CommitCreateInput!) {
+  commitCreate(commit: $commit)
+}
+
+mutation createStream($stream: StreamCreateInput!) {
+  streamCreate(stream: $stream)
+}
