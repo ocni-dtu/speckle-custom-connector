@@ -16,6 +16,6 @@ export interface Mesh {
   faces: number[]
   colors?: number[] | null
   texture_coords?: number[] | null
-  units: 'M'
+  units: string
   speckle_type: 'Objects.Geometry.Mesh'
 }
