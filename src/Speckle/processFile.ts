@@ -3,7 +3,7 @@ import { CylinderGeometry } from 'three'
 import { Mesh } from './interfaces.ts'
 import { v4 as uuidv4, v5 as uuidv5 } from 'uuid'
 import {ServerTransport} from "./serverTransport.ts";
-import {BaseObjectSerializer} from "./baseObjectSerializer.ts";
+import { serializeAndSend} from "./serializer.ts";
 
 interface ProcessFileProps {
   file: File
@@ -15,11 +15,9 @@ interface ProcessFileProps {
 
 export const processFile = async ({ file, token, streamId, branchName, message }: ProcessFileProps) => {
   const geometry = await parseFileObjects({ content: await file.text() })
+  const rootObjectHash = await serializeAndSend(geometry, token, streamId)  
   const serverTransport = new ServerTransport(import.meta.env.VITE_SPECKLE_SERVER_URL, token, streamId)
-  const serializer = new BaseObjectSerializer([serverTransport])
-  const serialized = await serializer.SerializeBase(geometry)
-
-  await serverTransport.CreateCommit(branchName, serialized.id, message)
+  await serverTransport.CreateCommit(branchName, rootObjectHash, message)
 }
 
 interface DandasNode {
@@ -50,7 +48,8 @@ export const parseFileObjects = async ({ content }: { content: string }) => {
         id: uuidv5(node._Knudenavn, uuidv5.URL),
         parameters: generateParameters(node),
         speckle_type: 'Objects.BuiltElements.DandasNode',
-        displayValue: [generateGeometry(node)],
+        // NOTE: display value of objects should also be detachable; not essential but how we roll
+        '@displayValue': [generateGeometry(node)]
       })),
   }
 }
@@ -96,6 +95,8 @@ const generateParameters = (node: DandasNode) => {
 const generateGeometry = (node: DandasNode): Mesh => {
   const radius = node.DiameterBredde / 2 / 1000
   const height = node.Terraenkote - node.Bundkote
+  // const radius = node.DiameterBredde / 2 / 5
+  // const height = (node.Terraenkote - node.Bundkote) * 200
 
   const cylinder = new CylinderGeometry(radius, radius, height, 24)
   cylinder.rotateX(Math.PI / 2)
@@ -111,7 +112,7 @@ const generateGeometry = (node: DandasNode): Mesh => {
     id: uuidv4(),
     vertices: vertices,
     faces: faces,
-    units: 'M',
+    units: 'meters',
     speckle_type: 'Objects.Geometry.Mesh',
   }
 }

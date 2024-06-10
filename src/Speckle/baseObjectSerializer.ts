@@ -3,6 +3,11 @@ import { IBase, ITransport } from './interfaces.ts'
 
 /**
  * Serializer for Speckle objects written in Typescript
+ * Dim's note: it's incorrect, produces wrong data:
+ * - transforms detached arrays into objects
+ * - incorrect closure tree generation (everyhting seems one level deep only everywhere)
+ * 
+ * Use at own risk 😅
  */
 export class BaseObjectSerializer {
   constructor(public transports: ITransport[]) {}
